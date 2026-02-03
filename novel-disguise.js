@@ -659,6 +659,19 @@
             background-color: white;
             width: auto;
         }
+
+        .nd-settings-form-group input[type="text"] {
+            font-size: 13px;
+            padding: 2px 4px;
+            border: 1px solid #c0c0c0;
+            background-color: #fff;
+            color: #000;
+            width: 180px;
+        }
+
+        .nd-settings-form-group input[type="text"]::placeholder {
+            color: #808080;
+        }
         
         .nd-settings-form-group input[type="radio"] {
             width: auto;
