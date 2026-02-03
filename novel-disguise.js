@@ -144,12 +144,34 @@
             marginType: DICT.MARGIN_TYPE.NORMAL,
             hideImage: true,
 
+            wordTitle: "文档1",
+            excelTitle: "工作簿1",
+
+            enableCustomDocTitle: false,
+            customWordDocTitle: "",
+            customExcelDocTitle: "",
+
             emptyCols: 20,
             enableExcelRandomPopulate: true,
             maxExcelRandomPopulateCol: 9
         };
         const stored = GM_getValue(KEY_CONFIG, {});
         const config = Object.assign({}, defaultConfig, stored);
+        if (!config.wordTitle) {
+            config.wordTitle = defaultConfig.wordTitle;
+        }
+        if (!config.excelTitle) {
+            config.excelTitle = defaultConfig.excelTitle;
+        }
+        if (typeof config.enableCustomDocTitle !== "boolean") {
+            config.enableCustomDocTitle = defaultConfig.enableCustomDocTitle;
+        }
+        if (typeof config.customWordDocTitle !== "string") {
+            config.customWordDocTitle = defaultConfig.customWordDocTitle;
+        }
+        if (typeof config.customExcelDocTitle !== "string") {
+            config.customExcelDocTitle = defaultConfig.customExcelDocTitle;
+        }
         if (config.mode !== DICT.MODE.ORIGINAL) {
             config.lastVisibleMode = config.mode;
         }
@@ -188,6 +210,27 @@
                     </select>
                 </div>
                 <div class="nd-settings-form-group">
+                    <label>自定义文档标题: </label>
+                    <label style="width: 30%;"><input type="radio" name="settings-custom-doc-title" value="true">是</label>
+                    <label style="width: 30%;"><input type="radio" name="settings-custom-doc-title" value="false">否</label>
+                </div>
+                <div class="nd-settings-form-group">
+                    <label for="settings-custom-word-doc-title">Word文档标题: </label>
+                    <input id="settings-custom-word-doc-title" name="settings-custom-word-doc-title" type="text" placeholder="不填则使用章节标题" />
+                </div>
+                <div class="nd-settings-form-group">
+                    <label for="settings-custom-excel-doc-title">Excel文档标题: </label>
+                    <input id="settings-custom-excel-doc-title" name="settings-custom-excel-doc-title" type="text" placeholder="不填则使用章节标题" />
+                </div>
+                <div class="nd-settings-form-group">
+                    <label for="settings-word-title">Word标题: </label>
+                    <input id="settings-word-title" name="settings-word-title" type="text" placeholder="文档1" />
+                </div>
+                <div class="nd-settings-form-group">
+                    <label for="settings-excel-title">Excel标题: </label>
+                    <input id="settings-excel-title" name="settings-excel-title" type="text" placeholder="工作簿1" />
+                </div>
+                <div class="nd-settings-form-group">
                     <label title="word半屏时采用无边距会看起来更加自然">Word页边距: </label>
                     <label style="width: 30%;"><input type="radio" name="margin-type" value="${DICT.MARGIN_TYPE.NORMAL}">正常</label>
                     <label style="width: 30%;"><input type="radio" name="margin-type" value="${DICT.MARGIN_TYPE.NONE}">无边距</label>
@@ -212,6 +255,11 @@
         //default
         $settings.find("select[name=settings-mode]").val(config.mode);
         $settings.find("select[name=settings-theme]").val(config.theme);
+        $settings.find("input[name=settings-word-title]").val(config.wordTitle);
+        $settings.find("input[name=settings-excel-title]").val(config.excelTitle);
+        $settings.find(`input[name=settings-custom-doc-title][value='${String(config.enableCustomDocTitle)}']`).prop('checked', true);
+        $settings.find("input[name=settings-custom-word-doc-title]").val(config.customWordDocTitle);
+        $settings.find("input[name=settings-custom-excel-doc-title]").val(config.customExcelDocTitle);
         $settings.find(`input[name=margin-type][value='${config.marginType}']`).prop('checked', true);
         $settings.find(`input[name=settings-hide-image][value='${String(config.hideImage)}']`).prop('checked', true);
 
@@ -225,10 +273,19 @@
 
             const formDataObj = new FormData(this);
 
+            const wordTitle = (formDataObj.get('settings-word-title') || '').trim();
+            const excelTitle = (formDataObj.get('settings-excel-title') || '').trim();
+            const customWordDocTitle = (formDataObj.get('settings-custom-word-doc-title') || '').trim();
+            const customExcelDocTitle = (formDataObj.get('settings-custom-excel-doc-title') || '').trim();
             config.mode = formDataObj.get('settings-mode');
             config.theme = formDataObj.get('settings-theme');
             config.marginType = formDataObj.get('margin-type');
             config.hideImage = formDataObj.get('settings-hide-image') === 'true';
+            config.wordTitle = wordTitle || "文档1";
+            config.excelTitle = excelTitle || "工作簿1";
+            config.enableCustomDocTitle = formDataObj.get('settings-custom-doc-title') === 'true';
+            config.customWordDocTitle = customWordDocTitle;
+            config.customExcelDocTitle = customExcelDocTitle;
             writeConfig();
 
 
@@ -832,9 +889,9 @@
 
     function overridePageTitle() {
         if (config.mode === DICT.MODE.WORD) {
-            document.title = "文档1";
+            document.title = config.wordTitle || "文档1";
         } else {
-            document.title = "工作簿1";
+            document.title = config.excelTitle || "工作簿1";
         }
     }
 
@@ -972,6 +1029,13 @@
     }
 
     function setDisguisedTitle(titleStr) {
+        if (config.enableCustomDocTitle) {
+            const customTitle = config.mode === DICT.MODE.WORD ? config.customWordDocTitle : config.customExcelDocTitle;
+            if (customTitle && customTitle.trim()) {
+                $('#disguised-title').text(customTitle.trim());
+                return;
+            }
+        }
         $('#disguised-title').text(titleStr);
     }
 
